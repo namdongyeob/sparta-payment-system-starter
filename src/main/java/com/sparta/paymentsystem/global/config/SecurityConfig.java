@@ -1,8 +1,13 @@
 package com.sparta.paymentsystem.global.config;
 
+import com.sparta.paymentsystem.global.error.ErrorCode;
 import com.sparta.paymentsystem.global.filter.JwtAuthFilter;
+import com.sparta.paymentsystem.global.response.ApiResponse;
+
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import tools.jackson.databind.ObjectMapper;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -22,6 +27,7 @@ import static org.springframework.boot.security.autoconfigure.web.servlet.PathRe
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final ObjectMapper objectMapper;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) {
@@ -35,7 +41,9 @@ public class SecurityConfig {
                 .authenticationEntryPoint((request, response, authException) -> {
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     response.setContentType("application/json;charset=UTF-8");
-                    response.getWriter().write("{\"code\":\"AUTH_001\",\"message\":\"인증이 필요합니다\"}");
+                    response.getWriter().write(
+                        objectMapper.writeValueAsString(ApiResponse.error(ErrorCode.UNAUTHORIZED)
+                    ));
                 })
             )
             .authorizeHttpRequests(auth -> auth
