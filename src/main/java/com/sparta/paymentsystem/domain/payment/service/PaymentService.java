@@ -7,6 +7,7 @@ import com.sparta.paymentsystem.global.error.BusinessException;
 import com.sparta.paymentsystem.global.error.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,14 +38,16 @@ public class PaymentService {
 	// 주문 목록에 결제 ID를 붙이기 위한 "Order → Payment" 조회
 	public Map<Long, Long> findPaymentIdMapByOrderIds(List<Long> orderIds) {
 		//  IN () 쿼리가 DB로 나가는 걸 차단하고 조기 반환
-		if (orderIds.isEmpty()) return Map.of();
+		if (orderIds.isEmpty())
+			return Map.of();
 		// Repository의 [orderId, paymentId] 튜플(Object[])을 Map<OrderId, PaymentId>로 재구성
 		return paymentRepository.findIdsByOrderIds(orderIds).stream()
 			.collect(Collectors.toMap(
-				row -> (Long) row[0],
-				row -> (Long) row[1]
+				row -> (Long)row[0],
+				row -> (Long)row[1]
 			));
 	}
+
 	// 주문 단건 상세 조회 : orderId만으로 조회
 	public Payment findByOrderIdWithOrder(Long orderId) {
 		return paymentRepository.findByOrderIdWithOrder(orderId)
@@ -72,6 +75,12 @@ public class PaymentService {
 	// 결제 정보와 연관된 주문 정보를 paymentId 기반으로 조회
 	public Payment findByIdWithOrder(Long paymentId) {
 		return paymentRepository.findByIdWithOrder(paymentId)
+			.orElseThrow(() -> new BusinessException(ErrorCode.PAYMENT_NOT_FOUND));
+	}
+
+	// 웹훅에서 수신한 PortOne 쪽 paymentId, 즉 portonePaymentId 기반으로 Payment 조회
+	public Payment findByPortonePaymentId(String portonePaymentId) {
+		return paymentRepository.findByPortonePaymentId(portonePaymentId)
 			.orElseThrow(() -> new BusinessException(ErrorCode.PAYMENT_NOT_FOUND));
 	}
 }
